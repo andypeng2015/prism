@@ -17,6 +17,7 @@ func TestCheckSourceAcceptsBackendEntryShapes(t *testing.T) {
 		{"vulkan", BackendVulkan, "step_vulkan", `#version 450
 void step_vulkan() {}`},
 		{"directml", BackendDirectML, "step_directml", `eos_directml_graph step_directml() {}`},
+		{"legacy directml", BackendDirectML, "step_directml", `manta_directml_graph step_directml() {}`},
 		{"webgpu", BackendWebGPU, "step_webgpu", `@compute @workgroup_size(1)
 fn step_webgpu() {}`},
 	}

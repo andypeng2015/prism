@@ -55,11 +55,11 @@ func CheckSource(src Source) error {
 	if src.Source == "" {
 		return sourceError(src, "source is required")
 	}
-	needle, ok := entryNeedle(src.Backend, src.Entry)
+	needles, ok := entryNeedles(src.Backend, src.Entry)
 	if !ok {
 		return sourceError(src, fmt.Sprintf("unsupported backend %q", src.Backend))
 	}
-	if !strings.Contains(src.Source, needle) {
+	if !containsAny(src.Source, needles) {
 		return sourceError(src, fmt.Sprintf("%s source does not define entry %q", src.Backend, src.Entry))
 	}
 	return nil
@@ -92,21 +92,33 @@ func validatorForBackend(backend Backend) (string, func(string) []string, bool) 
 	}
 }
 
-func entryNeedle(backend Backend, entry string) (string, bool) {
+func entryNeedles(backend Backend, entry string) ([]string, bool) {
 	switch backend {
 	case BackendCUDA:
-		return "__global__ void " + entry + "(", true
+		return []string{"__global__ void " + entry + "("}, true
 	case BackendMetal:
-		return "kernel void " + entry + "(", true
+		return []string{"kernel void " + entry + "("}, true
 	case BackendVulkan:
-		return "void " + entry + "(", true
+		return []string{"void " + entry + "("}, true
 	case BackendDirectML:
-		return "eos_directml_graph " + entry + "(", true
+		return []string{
+			"eos_directml_graph " + entry + "(",
+			"manta_directml_graph " + entry + "(",
+		}, true
 	case BackendWebGPU:
-		return "fn " + entry + "(", true
+		return []string{"fn " + entry + "("}, true
 	default:
-		return "", false
+		return nil, false
 	}
+}
+
+func containsAny(s string, needles []string) bool {
+	for _, needle := range needles {
+		if strings.Contains(s, needle) {
+			return true
+		}
+	}
+	return false
 }
 
 func sourceError(src Source, msg string) error {
