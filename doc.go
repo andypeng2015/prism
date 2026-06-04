@@ -16,6 +16,10 @@
 //     glslangValidator (for GLSL/GLES) — and surfaces structured diagnostics back
 //     to the caller.
 //
+//   - Backend source descriptors and entry-shape checks for generated GPU kernel
+//     variants. This lets compilers such as Eos validate emitted CUDA, Metal,
+//     Vulkan, DirectML, and WebGPU source without Prism knowing their artifact IR.
+//
 // Prism depends only on gotreesitter. It is consumed by Elio, Selena, Eos, and
 // gosx, and it deliberately never imports any of those packages.
 package prism
