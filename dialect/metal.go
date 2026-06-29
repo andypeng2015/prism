@@ -34,6 +34,13 @@ func (Metal) Sample(tex, uv string) string {
 	return tex + ".sample(" + tex + "Sampler, " + uv + ")"
 }
 
+// SampleCube renders a cube-map sample: tex.sample(texSampler, dir).
+// The call form is identical to Sample — the difference is that the texture is
+// declared as texturecube<float> and the coordinate is a float3 direction vector.
+func (Metal) SampleCube(tex, dir string) string {
+	return tex + ".sample(" + tex + "Sampler, " + dir + ")"
+}
+
 // metalTypeName spells a gputype.Type in Metal Shading Language.
 // Scalar mapping lifted from elio/emit/metal/metal.go:318-325:
 //
@@ -69,8 +76,13 @@ func metalTypeName(t gputype.Type) string {
 	return "/* unknown type */"
 }
 
+// Ternary renders a conditional expression using C-style ternary syntax.
+func (Metal) Ternary(cond, then, alt string) string {
+	return "(" + cond + " ? " + then + " : " + alt + ")"
+}
+
 // metalBuiltins maps canonical builtin names to their Metal spelling.
-// Lifted from selena/emit/metal/metal.go:139-166: all identity (no renames).
+// Lifted from selena/emit/metal/metal.go:139-166.
 var metalBuiltins = map[string]string{
 	"abs":        "abs",
 	"clamp":      "clamp",
@@ -98,4 +110,15 @@ var metalBuiltins = map[string]string{
 	"reflect":    "reflect",
 	"step":       "step",
 	"smoothstep": "smoothstep",
+	// Extended math builtins.
+	"refract": "refract",
+	"mod":     "fmod",  // Metal uses fmod(x, y) for floating-point modulo
+	"round":   "round",
+	"asin":    "asin",
+	"acos":    "acos",
+	"atan":    "atan",
+	"atan2":   "atan2",
+	"dpdx":    "dfdx", // Metal spells partial derivatives dfdx/dfdy
+	"dpdy":    "dfdy",
+	"fwidth":  "fwidth",
 }

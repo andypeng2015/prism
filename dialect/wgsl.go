@@ -34,6 +34,11 @@ func (WGSL) TypeName(t gputype.Type) string {
 // Builtin renders a builtin call. Unknown names fall back to the canonical name
 // (lifted from selena/emit/internal/spell/spell.go:10-16).
 func (WGSL) Builtin(name string, args []string) string {
+	// WGSL has no native float mod — expand to (x - y * floor(x / y)).
+	if name == "mod" && len(args) == 2 {
+		x, y := args[0], args[1]
+		return "(" + x + " - (" + y + " * floor(" + x + " / " + y + ")))"
+	}
 	if spelled, ok := wgslBuiltins[name]; ok {
 		name = spelled
 	}
@@ -46,6 +51,19 @@ func (WGSL) Swizzle(expr, components string) string { return expr + "." + compon
 // Lifted from selena/emit/wgsl/wgsl.go:106-108.
 func (WGSL) Sample(tex, uv string) string {
 	return "textureSample(" + tex + ", " + tex + "Sampler, " + uv + ")"
+}
+
+// SampleCube renders a cube-map sample: textureSample(tex, texSampler, dir).
+// The call form is identical to Sample — the difference is that the texture is
+// declared as texture_cube<f32> and the coordinate is a vec3 direction vector.
+func (WGSL) SampleCube(tex, dir string) string {
+	return "textureSample(" + tex + ", " + tex + "Sampler, " + dir + ")"
+}
+
+// Ternary renders a ternary conditional. WGSL has no ?: operator; it uses
+// select(falseVal, trueVal, cond) — note the argument order: false first.
+func (WGSL) Ternary(cond, then, alt string) string {
+	return "select(" + alt + ", " + then + ", " + cond + ")"
 }
 
 // wgslBuiltins maps canonical builtin names to their WGSL spelling.
@@ -77,4 +95,15 @@ var wgslBuiltins = map[string]string{
 	"reflect":    "reflect",
 	"step":       "step",
 	"smoothstep": "smoothstep",
+	// Extended math builtins.
+	"refract": "refract",
+	"round":   "round",
+	"asin":    "asin",
+	"acos":    "acos",
+	"atan":    "atan",
+	"atan2":   "atan2",
+	"dpdx":    "dpdx",
+	"dpdy":    "dpdy",
+	"fwidth":  "fwidth",
+	// "mod" is handled above as the (x - y * floor(x / y)) expansion.
 }

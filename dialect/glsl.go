@@ -19,6 +19,12 @@ func (GLSL) TypeName(t gputype.Type) string { return glslTypeName(t) }
 // Builtin renders a builtin call. Unknown names fall back to the canonical name.
 // Lifted from selena/emit/internal/spell/spell.go:10-16.
 func (GLSL) Builtin(name string, args []string) string {
+	// GLSL ES 1.00 / GLSL 1.10 lack round(); polyfill with floor(x + 0.5).
+	// This expansion is valid for both scalar and vector genType because GLSL
+	// scalar+vector arithmetic broadcasts the scalar component-wise.
+	if name == "round" && len(args) == 1 {
+		return "floor((" + args[0] + ") + 0.5)"
+	}
 	if spelled, ok := glslBuiltins[name]; ok {
 		name = spelled
 	}
@@ -30,6 +36,15 @@ func (GLSL) Swizzle(expr, components string) string { return expr + "." + compon
 // Sample renders: texture2D(tex, uv)
 // Lifted from selena/emit/glsl/glsl.go:74.
 func (GLSL) Sample(tex, uv string) string { return "texture2D(" + tex + ", " + uv + ")" }
+
+// SampleCube renders a cube-map sample: textureCube(tex, dir).
+// GLSL ES 1.00 uses the dedicated textureCube() built-in for samplerCube types.
+func (GLSL) SampleCube(tex, dir string) string { return "textureCube(" + tex + ", " + dir + ")" }
+
+// Ternary renders a conditional expression using C-style ternary syntax.
+func (GLSL) Ternary(cond, then, alt string) string {
+	return "(" + cond + " ? " + then + " : " + alt + ")"
+}
 
 // glslTypeName is shared by both GLSL and GLES (same type table).
 // Scalars: lifted from elio/emit/glsl/glsl.go:444-451.
@@ -102,4 +117,15 @@ var glslBuiltins = map[string]string{
 	"reflect":    "reflect",
 	"step":       "step",
 	"smoothstep": "smoothstep",
+	// Extended math builtins.
+	"refract": "refract",
+	"mod":     "mod",
+	// "round" is polyfilled above as floor(x + 0.5) — not in GLSL ES 1.00 / GLSL 1.10.
+	"asin":    "asin",
+	"acos":    "acos",
+	"atan":    "atan",
+	"atan2":   "atan",  // GLSL 2-arg atan is atan(y, x)
+	"dpdx":    "dFdx", // GLSL spells partial derivatives dFdx/dFdy
+	"dpdy":    "dFdy",
+	"fwidth":  "fwidth",
 }

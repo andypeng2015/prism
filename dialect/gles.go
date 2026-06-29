@@ -30,6 +30,16 @@ func (GLES) Swizzle(expr, components string) string { return expr + "." + compon
 // Lifted from selena/emit/gles/gles.go:74.
 func (GLES) Sample(tex, uv string) string { return "texture(" + tex + ", " + uv + ")" }
 
+// SampleCube renders a cube-map sample: texture(tex, dir).
+// GLSL ES 3.00's texture() built-in is overloaded for both sampler2D and
+// samplerCube, so the call form is identical to regular 2D sampling.
+func (GLES) SampleCube(tex, dir string) string { return "texture(" + tex + ", " + dir + ")" }
+
+// Ternary renders a conditional expression using C-style ternary syntax.
+func (GLES) Ternary(cond, then, alt string) string {
+	return "(" + cond + " ? " + then + " : " + alt + ")"
+}
+
 // glesBuiltins maps canonical builtin names to their GLSL ES 3.00 spelling.
 // Lifted from selena/emit/gles/gles.go:103-130.
 var glesBuiltins = map[string]string{
@@ -59,4 +69,15 @@ var glesBuiltins = map[string]string{
 	"reflect":    "reflect",
 	"step":       "step",
 	"smoothstep": "smoothstep",
+	// Extended math builtins.
+	"refract": "refract",
+	"mod":     "mod",
+	"round":   "round",
+	"asin":    "asin",
+	"acos":    "acos",
+	"atan":    "atan",
+	"atan2":   "atan",  // GLSL ES 3.00: 2-arg atan(y, x) is the atan2 equivalent
+	"dpdx":    "dFdx", // GLSL ES 3.00 partial derivatives
+	"dpdy":    "dFdy",
+	"fwidth":  "fwidth",
 }
